@@ -118,49 +118,45 @@ a.leaflet-active
 
 .leaflet-control-zoom
   border-radius: 7px
-
-.leaflet-control-zoom
   padding: 5px
   background: #000
   background: rgba(0, 0, 0, .25)
 
-.leaflet-control-zoom a
-  background-color: #FFF
-  background-color: rgba(255, 255, 255, .75)
+  a
+    background: #eee
+    background: rgba(255, 255, 255, .75)
+    border-radius: 4px
+    width: 19px
+    height: 19px
+
+    &:hover
+      background-color: #FFF
+
+  .leaflet-control-zoom-in
+    background-image: url($media/zoom-in.png)
+    margin-bottom: 5px
+
+  .leaflet-control-zoom-out
+    background-image: url($media/zoom-out.png)
 
 .leaflet-control-zoom a, .leaflet-control-layers a
   background-position: 50% 50%
   background-repeat: no-repeat
   display: block
 
-.leaflet-control-zoom a
-  border-radius: 4px
-  width: 19px
-  height: 19px
-
-.leaflet-control-zoom a:hover
-  background-color: #FFF
-
 .leaflet-touch .leaflet-control-zoom a
   width: 27px
   height: 27px
-
-.leaflet-control-zoom-in
-  background-image: url($media/zoom-in.png)
-  margin-bottom: 5px
-
-.leaflet-control-zoom-out
-  background-image: url($media/zoom-out.png)
 
 .leaflet-control-layers
   box-shadow: 0 1px 7px #999
   background: #f8f8f9
   border-radius: 8px
 
-.leaflet-control-layers a
-  background-image: url($media/layers.png)
-  width: 36px
-  height: 36px
+  a
+    background-image: url($media/layers.png)
+    width: 36px
+    height: 36px
 
 .leaflet-touch .leaflet-control-layers a
   width: 44px
