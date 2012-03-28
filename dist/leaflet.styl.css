@@ -2,16 +2,17 @@
 $media = 'https://media.hotels.nl/leaflet'
 
 // colors
-$dark = '#666'
-$grey = '#999'
-$lGrey = '#DDD'
-$bGrey = '#333'
-$sGrey = '#BBB'
-$fGrey = '#777'
-$soft = '#F8F8F9'
-$blue = '#05F'
-$sBlue = '#0078A8'
-$orange = '#FFA500'
+$dark = #666
+$darkFallback = #EEE
+$grey = #999
+$lGrey = #DDD
+$bGrey = #333
+$sGrey = #BBB
+$fGrey = #777
+$soft = #F8F8F9
+$blue = #05F
+$sBlue = #0078A8
+$orange = #FFA500
 
 .leaflet-map-pane,
 .leaflet-tile,
@@ -130,17 +131,17 @@ a.leaflet-active
   margin-right: 10px
 
 .leaflet-control-zoom
-  border-radius: 7px
-  padding: 5px
   background: #000
   background: rgba(0, 0, 0, .25)
+  border-radius: 7px
+  padding: 5px
 
   a
-    background: #eee
+    background: $darkFallback
     background: rgba(255, 255, 255, .75)
     border-radius: 4px
-    width: 19px
     height: 19px
+    width: 19px
 
     &:hover
       background-color: #FFF
@@ -162,18 +163,18 @@ a.leaflet-active
   height: 27px
 
 .leaflet-control-layers
-  box-shadow: 0 1px 7px $grey
   background: $soft
   border-radius: 8px
+  box-shadow: 0 1px 7px $grey
 
   a
     background-image: url($media/layers.png)
-    width: 36px
     height: 36px
+    width: 36px
 
 .leaflet-touch .leaflet-control-layers a
-  width: 44px
   height: 44px
+  width: 44px
 
 .leaflet-control-layers .leaflet-control-layers-list,
 .leaflet-control-layers-expanded .leaflet-control-layers-toggle
@@ -184,10 +185,10 @@ a.leaflet-active
   position: relative
 
 .leaflet-control-layers-expanded
-  padding: 6px 10px 6px 6px
-  font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif
-  color: $bGrey
   background: #FFF
+  color: $bGrey
+  font: 12px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif
+  padding: 6px 10px 6px 6px
 
 .leaflet-control-layers input
   margin-top: 2px
@@ -198,8 +199,8 @@ a.leaflet-active
   display: block
 
 .leaflet-control-layers-separator
-  height: 0
   border-top: 1px solid $lGrey
+  height: 0
   margin: 5px -10px 5px -6px
 
 .leaflet-container .leaflet-control-attribution
@@ -210,8 +211,8 @@ a.leaflet-active
 
 .leaflet-control-attribution,
 .leaflet-control-scale-line
-  padding: 0 5px
   color: $bGrey
+  padding: 0 5px
 
 .leaflet-container .leaflet-control-attribution,
 .leaflet-container .leaflet-control-scale
@@ -224,21 +225,21 @@ a.leaflet-active
   margin-bottom: 5px
 
 .leaflet-control-scale-line
-  border: 2px solid $fGrey
-  border-top: none
-  color: #000
-  line-height: 1
-  font-size: 10px
-  padding-bottom: 2px
-  text-shadow: 1px 1px 1px #FFF
   background-color: #000
   background-color: rgba(0, 0, 0, .5)
+  border-top: none
+  border: 2px solid $fGrey
+  color: #000
+  font-size: 10px
+  line-height: 1
+  padding-bottom: 2px
+  text-shadow: 1px 1px 1px #FFF
 
 .leaflet-control-scale-line:nth-child(2)
-  border-top: 2px solid $fGrey
-  padding-top: 1px
   border-bottom: none
+  border-top: 2px solid $fGrey
   margin-top: -2px
+  padding-top: 1px
 
 .leaflet-touch .leaflet-control-attribution,
 .leaflet-touch .leaflet-control-layers
@@ -268,6 +269,6 @@ a.leaflet-active
   color: $sBlue
 
 .leaflet-zoom-box
-  border: 2px dotted $blue
   background: #FFF
+  border: 2px dotted $blue
   opacity: 0.5
