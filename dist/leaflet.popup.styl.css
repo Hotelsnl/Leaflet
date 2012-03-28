@@ -1,3 +1,10 @@
+// media server
+$media = 'https://media.hotels.nl/leaflet'
+
+// colors
+$lGrey = '#DDD'
+$dGrey = '#888'
+
 .leaflet-popup-pane
   position: absolute
 
@@ -40,9 +47,7 @@
   transform: rotate(45deg)
 
 .leaflet-popup-close-button
-  position: absolute
-  top: 8px
-  right: 8px
+  absolute: top 8px right 8px
   width: 10px
   height: 10px
   overflow: hidden
@@ -52,12 +57,12 @@
 
 .leaflet-popup-scrolled
   overflow: auto
-  border-bottom: 1px solid #DDD
-  border-top: 1px solid #DDD
+  border-bottom: 1px solid $lGrey
+  border-top: 1px solid $lGrey
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip
   background: #FFF
-  box-shadow: 0 3px 10px #888
+  box-shadow: 0 3px 10px $dGrey
 
 .leaflet-popup-content-wrapper
   border-radius: 20px
@@ -66,4 +71,4 @@
   font: 12px/1.4 "Helvetica Neue", Arial, Helvetica, sans-serif
 
 .leaflet-popup-close-button
-  background: #FFF url(images/popup-close.png)
+  background: #FFF url($media/popup-close.png)
