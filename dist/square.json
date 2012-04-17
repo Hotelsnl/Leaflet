@@ -1,0 +1,13 @@
+{
+  "configuration": {
+    "dist": {
+      "min": "./dist/leaflet.{type}.{ext}",
+      "dev": "./dist/leaflet.{type}.{ext}"
+    }
+  },
+  "bundle": {
+    "leaflet.styl": {
+      "description": "Stylus CSS for Leaflet"
+    }
+  }
+}

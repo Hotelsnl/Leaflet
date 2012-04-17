@@ -1,4 +1,4 @@
 leaflet:
-	@buildr -b . -u --filename leafletcss --extension css
+	@square --bundle ./dist --extension css
 
 .PHONY: leaflet 
