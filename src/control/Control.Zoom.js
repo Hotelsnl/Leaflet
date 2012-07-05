@@ -11,8 +11,8 @@ L.Control.Zoom = L.Control.extend({
     this._createButton('Zoom out', className + '-out', container, map.zoomOut, map);
 
     L.DomEvent
-      .addListener(container, 'dblclick', L.DomEvent.stopPropagation)
-      .addListener(container, 'dblclick', L.DomEvent.preventDefault);
+      .on(container, 'dblclick', L.DomEvent.stopPropagation)
+      .on(container, 'dblclick', L.DomEvent.preventDefault);
 
     return container;
   },
@@ -23,9 +23,9 @@ L.Control.Zoom = L.Control.extend({
     link.title = title;
 
     L.DomEvent
-      .addListener(link, 'click', L.DomEvent.stopPropagation)
-      .addListener(link, 'click', L.DomEvent.preventDefault)
-      .addListener(link, 'click', fn, context);
+      .on(link, 'click', L.DomEvent.stopPropagation)
+      .on(link, 'click', L.DomEvent.preventDefault)
+      .on(link, 'click', fn, context);
 
     return link;
   }

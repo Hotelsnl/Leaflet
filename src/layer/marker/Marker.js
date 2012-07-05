@@ -25,12 +25,21 @@ L.Marker = L.Class.extend({
 
 		map.on('viewreset', this.update, this);
 
-		if (map.options.zoomAnimation && map.options.markerZoomAnimation) {
-			map.on('zoomanim', this._zoomAnimation, this);
-		}
-
 		this._initIcon();
 		this.update();
+
+		if (map.options.zoomAnimation && map.options.markerZoomAnimation) {
+			map.on('zoomanim', this._animateZoom, this);
+			this._icon.className += ' leaflet-zoom-animated';
+			if (this._shadow) {
+				this._shadow.className += ' leaflet-zoom-animated';
+			}
+		} else {
+			this._icon.className += ' leaflet-zoom-hide';
+			if (this._shadow) {
+				this._shadow.className += ' leaflet-zoom-hide';
+			}
+		}
 	},
 
 	onRemove: function (map) {
@@ -41,8 +50,10 @@ L.Marker = L.Class.extend({
 			this.closePopup();
 		}
 
-		map.off('viewreset', this.update, this)
-		   .off('zoomanim', this._zoomAnimation, this);
+		map.off({
+			'viewreset': this.update,
+			'zoomanim': this._animateZoom
+		}, this);
 
 		this._map = null;
 	},
@@ -134,7 +145,7 @@ L.Marker = L.Class.extend({
 		this._icon.style.zIndex = pos.y + this.options.zIndexOffset;
 	},
 
-	_zoomAnimation: function (opt) {
+	_animateZoom: function (opt) {
 		var pos = this._map._latLngToNewLayerPoint(this._latlng, opt.zoom, opt.center);
 
 		this._setPos(pos);
@@ -149,10 +160,10 @@ L.Marker = L.Class.extend({
 			events = ['dblclick', 'mousedown', 'mouseover', 'mouseout'];
 
 		icon.className += ' leaflet-clickable';
-		L.DomEvent.addListener(icon, 'click', this._onMouseClick, this);
+		L.DomEvent.on(icon, 'click', this._onMouseClick, this);
 
 		for (var i = 0; i < events.length; i++) {
-			L.DomEvent.addListener(icon, events[i], this._fireMouseEvent, this);
+			L.DomEvent.on(icon, events[i], this._fireMouseEvent, this);
 		}
 
 		if (L.Handler.MarkerDrag) {
