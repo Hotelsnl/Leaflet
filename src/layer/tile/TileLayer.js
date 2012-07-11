@@ -74,6 +74,11 @@ L.TileLayer = L.Class.extend({
 		this._update();
 	},
 
+	addTo: function (map) {
+		map.addLayer(this);
+		return this;
+	},
+
 	onRemove: function (map) {
 		map._panes.tilePane.removeChild(this._container);
 
@@ -113,6 +118,24 @@ L.TileLayer = L.Class.extend({
 		if (this._map) {
 			this._updateOpacity();
 		}
+	},
+
+	setUrl: function (url, noRedraw) {
+		this._url = url;
+
+		if (!noRedraw) {
+			this.redraw();
+		}
+
+		return this;
+	},
+
+	redraw: function () {
+		if (this._map) {
+			this._reset(true);
+			this._update();
+		}
+		return this;
 	},
 
 	_updateOpacity: function () {
@@ -323,16 +346,17 @@ L.TileLayer = L.Class.extend({
 	// image-specific code (override to implement e.g. Canvas or SVG tile layer)
 
 	getTileUrl: function (tilePoint, zoom) {
-		var subdomains = this.options.subdomains,
-			index = (tilePoint.x + tilePoint.y) % subdomains.length,
-			s = this.options.subdomains[index];
-
 		return L.Util.template(this._url, L.Util.extend({
-			s: s,
+			s: this._getSubdomain(tilePoint),
 			z: this._getOffsetZoom(zoom),
 			x: tilePoint.x,
 			y: tilePoint.y
 		}, this.options));
+	},
+
+	_getSubdomain: function (tilePoint) {
+		var index = (tilePoint.x + tilePoint.y) % this.options.subdomains.length;
+		return this.options.subdomains[index];
 	},
 
 	_createTileProto: function () {
@@ -383,8 +407,8 @@ L.TileLayer = L.Class.extend({
 
 		//Only if we are loading an actual image
 		if (this.src !== L.Util.emptyImageUrl) {
-			this.className += ' leaflet-tile-loaded';
-
+			L.DomUtil.addClass(this, 'leaflet-tile-loaded');
+		
 			layer.fire('tileload', {
 				tile: this,
 				url: this.src
@@ -410,3 +434,7 @@ L.TileLayer = L.Class.extend({
         layer._tileLoaded();
     }
 });
+
+L.tileLayer = function (url, options) {
+	return new L.TileLayer(url, options);
+};
