@@ -11,8 +11,7 @@ L.Control.Zoom = L.Control.extend({
     this._createButton('Zoom out', className + '-out', container, map.zoomOut, map);
 
     L.DomEvent
-      .on(container, 'dblclick', L.DomEvent.stopPropagation)
-      .on(container, 'dblclick', L.DomEvent.preventDefault);
+      .on(container, 'dblclick', L.DomEvent.stop);
 
     return container;
   },
