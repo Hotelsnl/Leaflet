@@ -12,12 +12,14 @@ L.Marker = L.Class.extend({
 		clickable: true,
 		draggable: false,
 		zIndexOffset: 0,
-		opacity: 1
+		opacity: 1,
+		riseOnHover: false,
+		riseOffset: 250
 	},
 
 	initialize: function (latlng, options) {
-		L.Util.setOptions(this, options);
-		this._latlng = latlng;
+		L.setOptions(this, options);
+		this._latlng = L.latLng(latlng);
 	},
 
 	onAdd: function (map) {
@@ -25,24 +27,28 @@ L.Marker = L.Class.extend({
 
 		map.on('viewreset', this.update, this);
 
-		if (map.options.zoomAnimation && map.options.markerZoomAnimation) {
-			map.on('zoomanim', this._zoomAnimation, this);
-		}
-
 		this._initIcon();
 		this.update();
+
+		if (map.options.zoomAnimation && map.options.markerZoomAnimation) {
+			map.on('zoomanim', this._animateZoom, this);
+		}
+	},
+
+	addTo: function (map) {
+		map.addLayer(this);
+		return this;
 	},
 
 	onRemove: function (map) {
 		this._removeIcon();
 
-		// TODO move to Marker.Popup.js
-		if (this.closePopup) {
-			this.closePopup();
-		}
+		this.fire('remove');
 
-		map.off('viewreset', this.update, this)
-		   .off('zoomanim', this._zoomAnimation, this);
+		map.off({
+			'viewreset': this.update,
+			'zoomanim': this._animateZoom
+		}, this);
 
 		this._map = null;
 	},
@@ -52,13 +58,11 @@ L.Marker = L.Class.extend({
 	},
 
 	setLatLng: function (latlng) {
-		this._latlng = latlng;
+		this._latlng = L.latLng(latlng);
 
 		this.update();
 
-		if (this._popup) {
-			this._popup.setLatLng(latlng);
-		}
+		this.fire('move', { latlng: this._latlng });
 	},
 
 	setZIndexOffset: function (offset) {
@@ -87,7 +91,11 @@ L.Marker = L.Class.extend({
 	},
 
 	_initIcon: function () {
-		var options = this.options;
+		var options = this.options,
+		    map = this._map,
+		    animation = (map.options.zoomAnimation && map.options.markerZoomAnimation),
+		    classToAdd = animation ? 'leaflet-zoom-animated' : 'leaflet-zoom-hide',
+		    needOpacityUpdate = false;
 
 		if (!this._icon) {
 			this._icon = options.icon.createIcon();
@@ -97,10 +105,28 @@ L.Marker = L.Class.extend({
 			}
 
 			this._initInteraction();
-			this._updateOpacity();
+			needOpacityUpdate = (this.options.opacity < 1);
+
+			L.DomUtil.addClass(this._icon, classToAdd);
+
+			if (options.riseOnHover) {
+				L.DomEvent
+					.on(this._icon, 'mouseover', this._bringToFront, this)
+					.on(this._icon, 'mouseout', this._resetZIndex, this);
+			}
 		}
+
 		if (!this._shadow) {
 			this._shadow = options.icon.createShadow();
+
+			if (this._shadow) {
+				L.DomUtil.addClass(this._shadow, classToAdd);
+				needOpacityUpdate = (this.options.opacity < 1);
+			}
+		}
+
+		if (needOpacityUpdate) {
+			this._updateOpacity();
 		}
 
 		var panes = this._map._panes;
@@ -114,6 +140,12 @@ L.Marker = L.Class.extend({
 
 	_removeIcon: function () {
 		var panes = this._map._panes;
+
+		if (this.options.riseOnHover) {
+			L.DomEvent
+			    .off(this._icon, 'mouseover', this._bringToFront)
+			    .off(this._icon, 'mouseout', this._resetZIndex);
+		}
 
 		panes.markerPane.removeChild(this._icon);
 
@@ -131,28 +163,35 @@ L.Marker = L.Class.extend({
 			L.DomUtil.setPosition(this._shadow, pos);
 		}
 
-		this._icon.style.zIndex = pos.y + this.options.zIndexOffset;
+		this._zIndex = pos.y + this.options.zIndexOffset;
+
+		this._resetZIndex();
 	},
 
-	_zoomAnimation: function (opt) {
+	_updateZIndex: function (offset) {
+		this._icon.style.zIndex = this._zIndex + offset;
+	},
+
+	_animateZoom: function (opt) {
 		var pos = this._map._latLngToNewLayerPoint(this._latlng, opt.zoom, opt.center);
 
 		this._setPos(pos);
 	},
 
 	_initInteraction: function () {
-		if (!this.options.clickable) {
-			return;
-		}
+
+		if (!this.options.clickable) { return; }
+
+		// TODO refactor into something shared with Map/Path/etc. to DRY it up
 
 		var icon = this._icon,
-			events = ['dblclick', 'mousedown', 'mouseover', 'mouseout'];
+		    events = ['dblclick', 'mousedown', 'mouseover', 'mouseout', 'contextmenu'];
 
-		icon.className += ' leaflet-clickable';
-		L.DomEvent.addListener(icon, 'click', this._onMouseClick, this);
+		L.DomUtil.addClass(icon, 'leaflet-clickable');
+		L.DomEvent.on(icon, 'click', this._onMouseClick, this);
 
 		for (var i = 0; i < events.length; i++) {
-			L.DomEvent.addListener(icon, events[i], this._fireMouseEvent, this);
+			L.DomEvent.on(icon, events[i], this._fireMouseEvent, this);
 		}
 
 		if (L.Handler.MarkerDrag) {
@@ -165,18 +204,32 @@ L.Marker = L.Class.extend({
 	},
 
 	_onMouseClick: function (e) {
-		L.DomEvent.stopPropagation(e);
-		if (this.dragging && this.dragging.moved()) { return; }
+		var wasDragged = this.dragging && this.dragging.moved();
+
+		if (this.hasEventListeners(e.type) || wasDragged) {
+			L.DomEvent.stopPropagation(e);
+		}
+
+		if (wasDragged) { return; }
+
 		if (this._map.dragging && this._map.dragging.moved()) { return; }
+
 		this.fire(e.type, {
 			originalEvent: e
 		});
 	},
 
 	_fireMouseEvent: function (e) {
+
 		this.fire(e.type, {
 			originalEvent: e
 		});
+
+		// TODO proper custom event propagation
+		// this line will always be called if marker is in a FeatureGroup
+		if (e.type === 'contextmenu' && this.hasEventListeners(e.type)) {
+			L.DomEvent.preventDefault(e);
+		}
 		if (e.type !== 'mousedown') {
 			L.DomEvent.stopPropagation(e);
 		}
@@ -189,7 +242,22 @@ L.Marker = L.Class.extend({
 		}
 	},
 
-	_updateOpacity: function (opacity) {
+	_updateOpacity: function () {
 		L.DomUtil.setOpacity(this._icon, this.options.opacity);
+		if (this._shadow) {
+			L.DomUtil.setOpacity(this._shadow, this.options.opacity);
+		}
+	},
+
+	_bringToFront: function () {
+		this._updateZIndex(this.options.riseOffset);
+	},
+
+	_resetZIndex: function () {
+		this._updateZIndex(0);
 	}
 });
+
+L.marker = function (latlng, options) {
+	return new L.Marker(latlng, options);
+};

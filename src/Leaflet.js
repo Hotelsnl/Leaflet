@@ -1,6 +1,6 @@
 var L, originalL;
 
-if (typeof exports !== 'undefined') {
+if (typeof exports !== undefined + '') {
 	L = exports;
 } else {
 	originalL = window.L;
@@ -14,4 +14,4 @@ if (typeof exports !== 'undefined') {
 	window.L = L;
 }
 
-L.version = '0.4';
+L.version = '0.5';

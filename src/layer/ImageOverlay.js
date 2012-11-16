@@ -5,11 +5,11 @@ L.ImageOverlay = L.Class.extend({
 		opacity: 1
 	},
 
-	initialize: function (url, bounds, options) { // (String, LatLngBounds)
+	initialize: function (url, bounds, options) { // (String, LatLngBounds, Object)
 		this._url = url;
-		this._bounds = bounds;
+		this._bounds = L.latLngBounds(bounds);
 
-		L.Util.setOptions(this, options);
+		L.setOptions(this, options);
 	},
 
 	onAdd: function (map) {
@@ -21,52 +21,93 @@ L.ImageOverlay = L.Class.extend({
 
 		map._panes.overlayPane.appendChild(this._image);
 
-		map.on('zoomanim', this._zoomAnimation, this);
 		map.on('viewreset', this._reset, this);
+
+		if (map.options.zoomAnimation && L.Browser.any3d) {
+			map.on('zoomanim', this._animateZoom, this);
+		}
+
 		this._reset();
 	},
 
 	onRemove: function (map) {
 		map.getPanes().overlayPane.removeChild(this._image);
+
 		map.off('viewreset', this._reset, this);
+
+		if (map.options.zoomAnimation) {
+			map.off('zoomanim', this._animateZoom, this);
+		}
+	},
+
+	addTo: function (map) {
+		map.addLayer(this);
+		return this;
 	},
 
 	setOpacity: function (opacity) {
 		this.options.opacity = opacity;
 		this._updateOpacity();
+		return this;
+	},
+
+	// TODO remove bringToFront/bringToBack duplication from TileLayer/Path
+	bringToFront: function () {
+		if (this._image) {
+			this._map._panes.overlayPane.appendChild(this._image);
+		}
+		return this;
+	},
+
+	bringToBack: function () {
+		var pane = this._map._panes.overlayPane;
+		if (this._image) {
+			pane.insertBefore(this._image, pane.firstChild);
+		}
+		return this;
 	},
 
 	_initImage: function () {
-		this._image = L.DomUtil.create('img', 'leaflet-image-layer leaflet-zoom-animated');
+		this._image = L.DomUtil.create('img', 'leaflet-image-layer');
 
-		this._image.style.visibility = 'hidden';
+		if (this._map.options.zoomAnimation && L.Browser.any3d) {
+			L.DomUtil.addClass(this._image, 'leaflet-zoom-animated');
+		} else {
+			L.DomUtil.addClass(this._image, 'leaflet-zoom-hide');
+		}
 
 		this._updateOpacity();
 
 		//TODO createImage util method to remove duplication
-		L.Util.extend(this._image, {
+		L.extend(this._image, {
 			galleryimg: 'no',
 			onselectstart: L.Util.falseFn,
 			onmousemove: L.Util.falseFn,
-			onload: L.Util.bind(this._onImageLoad, this),
+			onload: L.bind(this._onImageLoad, this),
 			src: this._url
 		});
 	},
 
-	_zoomAnimation: function (opt) {
-		var image = this._image,
-		    scale = Math.pow(2, opt.zoom - this._map._zoom),
-		    topLeft = this._map._latLngToNewLayerPoint(this._bounds.getNorthWest(), opt.zoom, opt.center),
-		    size = this._map._latLngToNewLayerPoint(this._bounds.getSouthEast(), opt.zoom, opt.center).subtract(topLeft),
-		    currentSize = this._map.latLngToLayerPoint(this._bounds.getSouthEast()).subtract(this._map.latLngToLayerPoint(this._bounds.getNorthWest()));
+	_animateZoom: function (e) {
+		var map = this._map,
+		    image = this._image,
+		    scale = map.getZoomScale(e.zoom),
+		    nw = this._bounds.getNorthWest(),
+		    se = this._bounds.getSouthEast(),
 
-		image.style[L.DomUtil.TRANSFORM] = L.DomUtil.getTranslateString(topLeft.add(size.subtract(currentSize).divideBy(2))) + ' scale(' + scale + ') ';
+		    topLeft = map._latLngToNewLayerPoint(nw, e.zoom, e.center),
+		    size = map._latLngToNewLayerPoint(se, e.zoom, e.center)._subtract(topLeft),
+		    currentSize = map.latLngToLayerPoint(se)._subtract(map.latLngToLayerPoint(nw)),
+		    origin = topLeft._add(size._subtract(currentSize)._divideBy(2));
+
+		image.style[L.DomUtil.TRANSFORM] =
+		        L.DomUtil.getTranslateString(origin) + ' scale(' + scale + ') ';
 	},
 
 	_reset: function () {
 		var image   = this._image,
 		    topLeft = this._map.latLngToLayerPoint(this._bounds.getNorthWest()),
-		    size    = this._map.latLngToLayerPoint(this._bounds.getSouthEast()).subtract(topLeft);
+		    size    = this._map.latLngToLayerPoint(this._bounds.getSouthEast())._subtract(topLeft);
 
 		L.DomUtil.setPosition(image, topLeft);
 
@@ -75,7 +116,6 @@ L.ImageOverlay = L.Class.extend({
 	},
 
 	_onImageLoad: function () {
-		this._image.style.visibility = '';
 		this.fire('load');
 	},
 
@@ -83,3 +123,7 @@ L.ImageOverlay = L.Class.extend({
 		L.DomUtil.setOpacity(this._image, this.options.opacity);
 	}
 });
+
+L.imageOverlay = function (url, bounds, options) {
+	return new L.ImageOverlay(url, bounds, options);
+};

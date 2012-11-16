@@ -3,14 +3,19 @@
  * Thanks to Dmitry Baranovsky and his Raphael library for inspiration!
  */
 
-L.Browser.vml = (function () {
-	var div = document.createElement('div');
-	div.innerHTML = '<v:shape adj="1"/>';
+L.Browser.vml = !L.Browser.svg && (function () {
+	try {
+		var div = document.createElement('div');
+		div.innerHTML = '<v:shape adj="1"/>';
 
-	var shape = div.firstChild;
-	shape.style.behavior = 'url(#default#VML)';
+		var shape = div.firstChild;
+		shape.style.behavior = 'url(#default#VML)';
 
-	return shape && (typeof shape.adj === 'object');
+		return shape && (typeof shape.adj === 'object');
+
+	} catch (e) {
+		return false;
+	}
 }());
 
 L.Path = L.Browser.svg || !L.Browser.vml ? L.Path : L.Path.extend({
@@ -27,15 +32,18 @@ L.Path = L.Browser.svg || !L.Browser.vml ? L.Path : L.Path.extend({
 			};
 		} catch (e) {
 			return function (name) {
-				return document.createElement('<' + name + ' xmlns="urn:schemas-microsoft.com:vml" class="lvml">');
+				return document.createElement(
+				        '<' + name + ' xmlns="urn:schemas-microsoft.com:vml" class="lvml">');
 			};
 		}
 	}()),
 
 	_initPath: function () {
 		var container = this._container = this._createElement('shape');
-		container.className += ' leaflet-vml-shape' +
-				(this.options.clickable ? ' leaflet-clickable' : '');
+		L.DomUtil.addClass(container, 'leaflet-vml-shape');
+		if (this.options.clickable) {
+			L.DomUtil.addClass(container, 'leaflet-clickable');
+		}
 		container.coordsize = '1 1';
 
 		this._path = this._createElement('path');
@@ -50,9 +58,9 @@ L.Path = L.Browser.svg || !L.Browser.vml ? L.Path : L.Path.extend({
 
 	_updateStyle: function () {
 		var stroke = this._stroke,
-			fill = this._fill,
-			options = this.options,
-			container = this._container;
+		    fill = this._fill,
+		    options = this.options,
+		    container = this._container;
 
 		container.stroked = options.stroke;
 		container.filled = options.fill;
@@ -66,6 +74,11 @@ L.Path = L.Browser.svg || !L.Browser.vml ? L.Path : L.Path.extend({
 			stroke.weight = options.weight + 'px';
 			stroke.color = options.color;
 			stroke.opacity = options.opacity;
+			if (options.dashArray) {
+				stroke.dashStyle = options.dashArray.replace(/ *, */g, ' ');
+			} else {
+				stroke.dashStyle = '';
+			}
 		} else if (stroke) {
 			container.removeChild(stroke);
 			this._stroke = null;

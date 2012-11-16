@@ -51,11 +51,11 @@ exports.uglify = function (code) {
 };
 
 exports.combineFiles = function (files) {
-	var content = '(function () {\n\n';
+	var content = '(function (window, undefined) {\n\n';
 	for (var i = 0, len = files.length; i < len; i++) {
 		content += fs.readFileSync(files[i], 'utf8') + '\n\n';
 	}
-	return content + '\n\n}());';
+	return content + '\n\n}(this));';
 };
 
 exports.save = function (savePath, compressed) {
@@ -74,6 +74,6 @@ exports.getSizeDelta = function (newContent, oldContent) {
 	if (!oldContent) {
 		return 'new';
 	}
-	var delta = newContent.length - oldContent.length;
+	var delta = newContent.replace(/\r\n?/g, '\n').length - oldContent.replace(/\r\n?/g, '\n').length;
 	return (delta >= 0 ? '+' : '') + delta;
 };
