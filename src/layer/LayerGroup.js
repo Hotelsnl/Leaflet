@@ -40,6 +40,13 @@ L.LayerGroup = L.Class.extend({
 		return this;
 	},
 
+	hasLayer: function (layer) {
+		if (!layer) { return false; }
+
+		var id = L.stamp(layer);
+		return this._layers.hasOwnProperty(id);
+	},
+
 	clearLayers: function () {
 		this.eachLayer(this.removeLayer, this);
 		return this;
@@ -83,6 +90,17 @@ L.LayerGroup = L.Class.extend({
 				method.call(context, this._layers[i]);
 			}
 		}
+		return this;
+	},
+
+	getLayers: function () {
+		var layers = [];
+		for (var i in this._layers) {
+			if (this._layers.hasOwnProperty(i)) {
+				layers.push(this._layers[i]);
+			}
+		}
+		return layers;
 	},
 
 	setZIndex: function (zIndex) {

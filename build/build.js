@@ -5,7 +5,6 @@ var fs = require('fs'),
     deps = require('./deps.js').deps,
     hintrc = require('./hintrc.js').config;
 
-
 function lintFiles(files) {
 
 	var errorsFound = 0,
@@ -13,7 +12,7 @@ function lintFiles(files) {
 
 	for (i = 0, len = files.length; i < len; i++) {
 
-		jshint.JSHINT(fs.readFileSync(files[i], 'utf8'), hintrc);
+		jshint.JSHINT(fs.readFileSync(files[i], 'utf8'), hintrc, i ? {L: true} : null);
 		errors = jshint.JSHINT.errors;
 
 		for (j = 0, len2 = errors.length; j < len2; j++) {
@@ -63,6 +62,8 @@ function getFiles(compsBase32) {
 
 	return files;
 }
+
+exports.getFiles = getFiles;
 
 exports.lint = function () {
 
@@ -153,3 +154,31 @@ exports.build = function (compsBase32, buildName) {
 		console.log('\tSaved to ' + path);
 	}
 };
+
+exports.test = function() {
+	var testacular = require('testacular'),
+	    testConfig = {configFile : __dirname + '/../spec/testacular.conf.js'};
+
+	testConfig.browsers = ['PhantomJS'];
+	isArgv('--chrome') &&  testConfig.browsers.push('Chrome');
+	isArgv('--ff') && testConfig.browsers.push('Firefox');
+
+	// will work only with new testacular that supports code coverage (today it's in master)
+	if (isArgv('--cov')) { // temporary hack until testacular with coverage becomes stable
+		testacular = require('../node_modules/testacular/lib/index.js'); // use local testacular
+		testConfig.preprocessors = {
+			'**/src/**/*.js': 'coverage',
+		};
+		testConfig.coverageReporter = {
+			type : 'html',
+			dir : 'coverage/'
+		};
+		testConfig.reporters = ['coverage'];
+	}
+
+	testacular.server.start(testConfig);
+
+	function isArgv(optName){
+		return process.argv.indexOf(optName) !== -1;
+	}
+}
