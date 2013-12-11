@@ -14,9 +14,10 @@ L.Map.include({
 		}
 
 		var zoomChanged = (this._zoom !== zoom),
-			canBeAnimated = this._loaded && !forceReset && !!this._layers;
+			canBeAnimated = this._loaded && !forceReset && !!this._layers,
+			iegt10 = navigator.userAgent.match(/Trident/) && !navigator.userAgent.match(/MSIE/);
 
-		if (canBeAnimated) {
+		if (canBeAnimated && !iegt10) {
 
 			// try animating pan or zoom
 			var animated = zoomChanged ?
